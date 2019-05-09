@@ -27,8 +27,6 @@ fs.readFile('credentials.json', (err, content) => {
  * @param {function} callback The callback to call with the authorized client.
  */
 function authorize(credentials, callback) {
-    // console.log(JSON.parse(credentials.installed));
-    // console.log(credentials.installed)
     const { client_secret, client_id, redirect_uris } = credentials.installed;
     console.log(redirect_uris)
     const oAuth2Client = new google.auth.OAuth2(
@@ -81,37 +79,28 @@ function getAccessToken(oAuth2Client, callback) {
 function init(auth) {
     const drive = google.drive({ version: 'v3', auth });
 
-    uploadImg(drive);
-    listFiles(drive);
+    // Find file id of the folder where we will upload the file
+    getFolderData(drive, 'testeando')
+        .then(
+            folderData => {
+                if (folderData) {
+                    uploadImg(drive, folderData.id);
+                }
+            }
+        )
+    
 }
 
 /**
- * List 10 files. Test Drive API
+ * 
+ * @param {*} drive Drive API instance
+ * @param {*} idFather Father's folder id
  */
-listFiles = (drive) => {
-    drive.files.list({
-        pageSize: 10,
-        fields: 'nextPageToken, files(id, name)',
-    }, (err, res) => {
-        if (err) return console.log('The API returned an error: ' + err);
-        const files = res.data.files;
-        if (files.length) {
-            console.log('Files:');
-            files.map((file) => {
-                console.log(`${file.name} (${file.id})`);
-            });
-        } else {
-            console.log('No files found.');
-        }
-    });
-}
-
-/**
- * Upload img. Test
- */
-uploadImg = (drive) => {
+uploadImg = (drive, idFather) => {
+    
     const fileMetadata = {
-        'name': 'photo.jpg'
+        'name': 'photo.jpg',
+        parents: [idFather]
     };
 
     const media = {
@@ -131,5 +120,68 @@ uploadImg = (drive) => {
             console.log('File Id: ', file.id);
         }
     });
+    
+         
+
 
 }
+
+/**
+ * To create folder in drive
+ */
+createFolder = (drive, nameFolder) => {
+    var fileMetadata = {
+        'name': nameFolder,
+        'mimeType': 'application/vnd.google-apps.folder'
+    };
+    drive.files.create({
+        resource: fileMetadata,
+        fields: 'id'
+    }, function (err, file) {
+        if (err) {
+            // Handle error
+            console.error(err);
+        } else {
+            console.log('Folder Id: ', file.id);
+        }
+    });
+}
+
+/**
+ * Check if exist a folder in Drive
+ */
+getFolderData = (drive, folderName) => 
+    filesListPromise(drive, { pageSize: 10 })
+        .then(
+            res => 
+                res.data.files.find(
+                    f => 
+                        f.name === folderName &&
+                        f.mimeType === 'application/vnd.google-apps.folder'
+                )
+                // res.data.files &&
+                // res.data.files.some(
+                //     f => 
+                //         f.name === folderName &&
+                //         f.mimeType === 'application/vnd.google-apps.folder'
+                // )
+        )
+        .catch(
+            err => console.log('The API returned an error: ' + err)
+        )
+
+
+/**
+ * drive.files.list promise wrapped
+ */
+filesListPromise = (drive, paramsList) =>
+    new Promise(
+        (resolve, reject) => 
+            drive.files.list(
+                paramsList, 
+                (err, res) => 
+                    resolve(res) &&
+                    reject(err)
+            )
+        
+    )
