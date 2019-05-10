@@ -1,0 +1,7 @@
+const FOLDER_DRIVE_NAME = 'drive-pictures-sync';
+const API_FIREBASE_VERSION = 'v3';
+const DRIVE_FOLDER_PATH = 'folder-drive-data.json';
+
+exports.FOLDER_DRIVE_NAME = FOLDER_DRIVE_NAME;
+exports.API_FIREBASE_VERSION = API_FIREBASE_VERSION;
+exports.DRIVE_FOLDER_PATH = DRIVE_FOLDER_PATH;

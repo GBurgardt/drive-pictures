@@ -19,16 +19,16 @@ readCredentialsFile = (credentialsPath) =>
  * @param {*} drive Drive API instance
  * @param {*} idFather Father's folder id
  */
-uploadImg = (drive, idFather) => {
+uploadImgFile = (drive, idFather, localPath, fileName) => {
     
     const fileMetadata = {
-        'name': 'photo.jpg',
+        name: fileName,
         parents: [idFather]
     };
 
     const media = {
         mimeType: 'image/jpeg',
-        body: fs.createReadStream('files/photo.jpg')
+        body: fs.createReadStream(localPath)
     };
 
     drive.files.create({
@@ -40,48 +40,53 @@ uploadImg = (drive, idFather) => {
             // Handle error
             console.error(err);
         } else {
-            console.log('File Id: ', file.id);
+            console.log('File uploaded: ');
+            console.log(file.data.id);
         }
     });
-    
-         
-
 
 }
 
 /**
- * To create folder in drive
+ * To create folder in drive, and store dataFolder in local
  */
-createFolder = (drive, nameFolder) => {
-    var fileMetadata = {
-        'name': nameFolder,
-        'mimeType': 'application/vnd.google-apps.folder'
-    };
-    drive.files.create({
-        resource: fileMetadata,
-        fields: 'id'
-    }, function (err, file) {
-        if (err) {
-            // Handle error
-            console.error(err);
-        } else {
-            console.log('Folder Id: ', file.id);
+createFolder = (drive, nameFolder) => 
+    new Promise(
+        (resolve, reject) => {
+
+            const fileMetadata = {
+                'name': nameFolder,
+                'mimeType': 'application/vnd.google-apps.folder'
+            };
+        
+            drive.files.create({
+                resource: fileMetadata,
+                fields: 'id'
+            }, (err, file) => {
+                if (err) {
+                    reject(err)
+                } else {
+                    resolve(file)
+                }
+            });
         }
-    });
-}
+    )
+
 
 /**
- * Check if exist a folder in Drive
+ * Finde file (or folder, that is a file) in Drive
+ * image/jpeg
+ * application/vnd.google-apps.folder
  */
-getFolderData = (drive, folderName) => 
-    filesListPromise(drive, { pageSize: 10 })
+findFile = (drive, name, mimeType) => 
+    filesListPromise(drive, { 
+        q: `mimeType = '${mimeType}' and name = '${name}'`
+    })
         .then(
-            res => 
-                res.data.files.find(
-                    f => 
-                        f.name === folderName &&
-                        f.mimeType === 'application/vnd.google-apps.folder'
-                )
+            res => {
+                console.log(res.data.files)
+                return res.data.files[0]
+            }
         )
         .catch(
             err => console.log('The API returned an error: ' + err)
@@ -106,5 +111,6 @@ filesListPromise = (drive, paramsList) =>
 
 
 exports.readCredentialsFile = readCredentialsFile;
-exports.uploadImg = uploadImg;
-exports.getFolderData = getFolderData;
+exports.uploadImgFile = uploadImgFile;
+exports.findFile = findFile;
+exports.createFolder = createFolder;

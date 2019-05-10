@@ -57,11 +57,13 @@ function getAccessToken(oAuth2Client, callback) {
         oAuth2Client.getToken(code, (err, token) => {
             if (err) return console.error('Error retrieving access token', err);
             oAuth2Client.setCredentials(token);
+            
             // Store the token to disk for later program executions
             fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
                 if (err) return console.error(err);
                 console.log('Token stored to', TOKEN_PATH);
             });
+
             callback(oAuth2Client);
         });
     });
@@ -93,17 +95,3 @@ const connectDrive = (credentialsPath) =>
 
 
 exports.connectDrive = connectDrive;
-
-
-
-
-
-// // Find file id of the folder where we will upload the file
-// getFolderData(drive, 'testeando')
-//     .then(
-//         folderData => {
-//             if (folderData) {
-//                 uploadImg(drive, folderData.id);
-//             }
-//         }
-//     )
