@@ -1,11 +1,11 @@
 const chokidar = require('chokidar');
-
 const homedir = require('os').homedir();
-
 const driveFilesService = require('./drive-files-service');
 
-
-syncPicturesFolder = (drive, idFolderFirebase) => {
+/**
+ * Wath Pictures folder for changes, and upload new pictures
+ */
+syncPicturesFolder = (drive, idFolderDrive) => {
     const namePicturesFolder = 'Pictures';
 
     chokidar.watch(
@@ -21,7 +21,7 @@ syncPicturesFolder = (drive, idFolderFirebase) => {
 
             driveFilesService.uploadImgFile(
                 drive,
-                idFolderFirebase,
+                idFolderDrive,
                 path,
                 nameFile
             )

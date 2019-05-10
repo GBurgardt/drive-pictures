@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { google } = require('googleapis');
-const { CREDENTIAL_PATH } = require('./constants/paths')
-const { FOLDER_DRIVE_NAME, API_FIREBASE_VERSION, DRIVE_FOLDER_PATH } = require('./constants/config')
+const { CREDENTIAL_PATH, ID_FOLDER_DRIVE_PATH } = require('./constants/paths')
+const { FOLDER_DRIVE_NAME, API_DRIVE_VERSION } = require('./constants/configDrive')
 
 const driveAuthService = require('./services/drive-auth-service');
 const driveFilesService = require('./services/drive-files-service');
@@ -10,11 +10,11 @@ const locaFilesService = require('./services/local-files-service');
 
 driveAuthService.connectDrive(CREDENTIAL_PATH)
     .then(auth => {
-        const drive = google.drive({ version: API_FIREBASE_VERSION, auth });
+        const drive = google.drive({ version: API_DRIVE_VERSION, auth });
 
         console.log('Searching data folder in local..');
         
-        fs.readFile(DRIVE_FOLDER_PATH, (err, fileFolderData) => {
+        fs.readFile(ID_FOLDER_DRIVE_PATH, (err, fileFolderData) => {
             if (err) {
                 console.log('No data folder found, then create folder in drive an store in local data folder..')
                 driveFilesService.createFolder(drive, FOLDER_DRIVE_NAME)
@@ -22,9 +22,9 @@ driveAuthService.connectDrive(CREDENTIAL_PATH)
                         newFolder => {
                             const folderData = newFolder.data;
 
-                            fs.writeFile(DRIVE_FOLDER_PATH, JSON.stringify(folderData), (err) => {
+                            fs.writeFile(ID_FOLDER_DRIVE_PATH, JSON.stringify(folderData), (err) => {
                                 if (err) return console.error(err);
-                                console.log('Data folder stored to', DRIVE_FOLDER_PATH);
+                                console.log('Data folder stored to', ID_FOLDER_DRIVE_PATH);
                             })
 
                             locaFilesService.syncPicturesFolder(drive, folderData.id)
