@@ -8,27 +8,25 @@ const driveFilesService = require('./drive-files-service');
 syncPicturesFolder = (drive, idFolderDrive) => {
     const namePicturesFolder = 'Pictures';
 
-    chokidar.watch(
-        `${homedir}/${namePicturesFolder}`, 
-        { ignored: /(^|[\/\\])\../ }
-    ).on(
-        'add', 
-        (path, event) => {
-            
-            const nameFile = path.substring(
-                path.indexOf(namePicturesFolder) + namePicturesFolder.length + 1
-            );
+    chokidar.watch(`${homedir}/${namePicturesFolder}`, { ignored: /(^|[\/\\])\../, ignoreInitial: true })
+        .on(
+            'add', 
+            (path, event) => {
 
-            driveFilesService.uploadImgFile(
-                drive,
-                idFolderDrive,
-                path,
-                nameFile
-            )
-                
+                const nameFile = path.substring(
+                    path.indexOf(namePicturesFolder) + namePicturesFolder.length + 1
+                );
 
-        }
-    );
+                driveFilesService.uploadImgFile(
+                    drive,
+                    idFolderDrive,
+                    path,
+                    nameFile
+                )
+                    
+
+            }
+        )
 }
 
 
