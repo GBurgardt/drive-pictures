@@ -31,19 +31,23 @@ uploadImgFile = (drive, idFather, localPath, fileName) => {
         body: fs.createReadStream(localPath)
     };
 
-    drive.files.create({
-        resource: fileMetadata,
-        media: media,
-        fields: 'id'
-    }, (err, file) => {
-        if (err) {
-            // Handle error
-            console.error(err);
-        } else {
-            console.log('File uploaded: ');
-            console.log(file.data.id);
+
+    return new Promise(
+        (resolve, reject) => {
+            drive.files.create({
+                resource: fileMetadata,
+                media: media,
+                fields: 'id'
+            }, (err, file) => {
+                
+                if (err) {
+                    reject(err)
+                } else {
+                    resolve(file)
+                }
+            })
         }
-    });
+    )
 
 }
 
@@ -53,6 +57,8 @@ uploadImgFile = (drive, idFather, localPath, fileName) => {
 createFolder = (drive, nameFolder) => 
     new Promise(
         (resolve, reject) => {
+
+            console.log('Then create folder in drive..')
 
             const fileMetadata = {
                 'name': nameFolder,

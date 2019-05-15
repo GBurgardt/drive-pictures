@@ -13,49 +13,63 @@ driveAuthService.connectDrive(CREDENTIAL_PATH)
         const drive = google.drive({ version: API_DRIVE_VERSION, auth });
 
         console.log('Searching data folder in local..');
-        
+
         fs.readFile(ID_FOLDER_DRIVE_PATH, (err, fileFolderData) => {
             if (err) {
+                console.log(err)
                 console.log('No data folder found, then create folder in drive an store in local data folder..')
-                driveFilesService.createFolder(drive, FOLDER_DRIVE_NAME)
-                    .then(
-                        newFolder => {
-                            const folderData = newFolder.data;
 
-                            fs.writeFile(ID_FOLDER_DRIVE_PATH, JSON.stringify(folderData), (err) => {
-                                if (err) return console.error(err);
-                                console.log('Data folder stored to', ID_FOLDER_DRIVE_PATH);
-                            })
-
-                            locaFilesService.syncPicturesFolder(drive, folderData.id)
-                        }
-                    )
+                createFolderAndWriteFile(drive);
             } else {
 
-                const folderData = JSON.parse(fileFolderData)
-                locaFilesService.syncPicturesFolder(drive, folderData.id)
-            }
-            
-        });
+                console.log('Data folder finded! SYNC IS ON')
 
-        // driveFilesService.findFileById(drive, idFolder)
-        //     .then(
-        //         folderData => {
-        //             // Si ya existe la carpeta la uso. Si no existe, creo una nueva
-        //             if (folderData) {
-        //                 // Escucho cambios en Pictures folder y voy subiendo los cambios a la carpeta encontrada
-        //                 locaFilesService.syncPicturesFolder(drive, folderData.id)
-        //             } else {
-        //                 driveFilesService.createFolder(drive, FOLDER_DRIVE_NAME).then(
-        //                     newFolderData => locaFilesService.syncPicturesFolder(drive, newFolderData.data.id)
-        //                 )
-        //             }
-        //         }
-        //     )
-        //     .catch(err => {
-        //         console.log(err)
-        //     })  
+                const folderData = JSON.parse(fileFolderData)
+
+                syncPictureFolder(drive, folderData);
+            }
+
+        });
 
 
     })
     .catch(err => console.log(err))
+
+
+createFolderAndWriteFile = (drive) => {
+    driveFilesService.createFolder(drive, FOLDER_DRIVE_NAME)
+        .then(
+            newFolder => {
+                const folderData = newFolder.data;
+
+                fs.writeFile(ID_FOLDER_DRIVE_PATH, JSON.stringify(folderData), (err) => {
+                    if (err) return console.error(err);
+                    console.log('Data folder stored to', ID_FOLDER_DRIVE_PATH);
+                })
+
+                console.log('Folder created sucess. SYNC IS ON')
+
+                syncPictureFolder(drive, folderData)
+            }
+        )
+}
+
+syncPictureFolder = (drive, folderData) => {
+    locaFilesService.syncPicturesFolder(drive, folderData.id)
+        .then(
+            imgMetaPromise => imgMetaPromise && imgMetaPromise.then ? 
+                imgMetaPromise
+                    .then(a => console.log('A picture was uploaded!'))
+                    .catch(e => console.log('fasf')) 
+                : 
+                console.log('fafa')
+        )
+        .catch(err => 
+            (err.code === 404) ?
+                driveFilesService.createFolder(drive, FOLDER_DRIVE_NAME)
+                    .then(resp => console.log('Folder created! SYNC ON')) 
+                    .catch(err => console.log('Error in folder creation')) 
+                : 
+                console.log(err)
+        )
+}
